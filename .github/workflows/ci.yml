@@ -22,6 +22,15 @@ jobs:
           set -euo pipefail
           grep -E '^[A-Z0-9_]+=.*$' config/versions.env >> "$GITHUB_ENV"
 
+      - name: Set build metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+          echo "VCS_REF=${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "SOURCE=https://github.com/${GITHUB_REPOSITORY}" >> "$GITHUB_ENV"
+          echo "VERSION=${DBT_CORE_VERSION}" >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -30,6 +39,10 @@ jobs:
         run: |
           docker build \
             -f docker/base/Dockerfile \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
             -t dbt-runtime-base:ci \
             .
 
@@ -40,6 +53,10 @@ jobs:
             -f docker/core/Dockerfile \
             --build-arg BASE_IMAGE=dbt-runtime-base:ci \
             --build-arg DBT_CORE_VERSION=${{ env.DBT_CORE_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
             -t dbt-runtime-core:ci \
             .
 
@@ -50,6 +67,10 @@ jobs:
             -f docker/adapters/snowflake/Dockerfile \
             --build-arg CORE_IMAGE=dbt-runtime-core:ci \
             --build-arg DBT_SNOWFLAKE_VERSION=${{ env.DBT_SNOWFLAKE_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
             -t dbt-runtime-snowflake:ci \
             .
 
