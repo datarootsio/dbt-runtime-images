@@ -1,0 +1,79 @@
+name: publish-images-ghcr
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DBT_CORE_VERSION: "1.8.0"
+  DBT_SNOWFLAKE_VERSION: "1.8.0"
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push base
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/base/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-base:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-base:${{ env.DBT_CORE_VERSION }}
+
+      - name: Build & push core
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/core/Dockerfile
+          push: true
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-base:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            DBT_CORE_VERSION=${{ env.DBT_CORE_VERSION }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}
+
+      - name: Build & push snowflake
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/adapters/snowflake/Dockerfile
+          push: true
+          build-args: |
+            CORE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            DBT_SNOWFLAKE_VERSION=${{ env.DBT_SNOWFLAKE_VERSION }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}
+
+      - name: Smoke test core (dbt --version)
+        run: |
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} --version
+
+      - name: Smoke test snowflake adapter import
+        run: |
+          docker run --rm --entrypoint bash \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
+            -lc 'python -c "import dbt.adapters.snowflake; print(\"ok\")"'

@@ -1,0 +1,36 @@
+name: ci-build-test
+
+on:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build base
+        run: docker build -f docker/base/Dockerfile -t dbt-runtime-base:ci .
+
+      - name: Build core
+        run: |
+          docker build -f docker/core/Dockerfile \
+            --build-arg BASE_IMAGE=dbt-runtime-base:ci \
+            --build-arg DBT_CORE_VERSION=1.8.0 \
+            -t dbt-runtime-core:ci .
+
+      - name: Build snowflake
+        run: |
+          docker build -f docker/adapters/snowflake/Dockerfile \
+            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
+            --build-arg DBT_SNOWFLAKE_VERSION=1.8.0 \
+            -t dbt-runtime-snowflake:ci .
+
+      - name: Smoke test core
+        run: docker run --rm dbt-runtime-core:ci --version
+
+      - name: Smoke test snowflake adapter import
+        run: |
+          docker run --rm --entrypoint bash dbt-runtime-snowflake:ci -lc \
+            'python -c "import dbt.adapters.snowflake; print(\"ok\")"'
