@@ -2,6 +2,8 @@ name: ci-build-test
 
 on:
   pull_request:
+  push:
+    branches: [ "main" ]
 
 jobs:
   build-test:
