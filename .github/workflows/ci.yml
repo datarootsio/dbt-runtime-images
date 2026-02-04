@@ -5,12 +5,23 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
+env:
+  DBT_CORE_VERSION: "1.8.0"
+  DBT_SNOWFLAKE_VERSION: "1.8.0"
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build base
         run: docker build -f docker/base/Dockerfile -t dbt-runtime-base:ci .
@@ -19,17 +30,17 @@ jobs:
         run: |
           docker build -f docker/core/Dockerfile \
             --build-arg BASE_IMAGE=dbt-runtime-base:ci \
-            --build-arg DBT_CORE_VERSION=1.8.0 \
+            --build-arg DBT_CORE_VERSION=${{ env.DBT_CORE_VERSION }} \
             -t dbt-runtime-core:ci .
 
       - name: Build snowflake
         run: |
           docker build -f docker/adapters/snowflake/Dockerfile \
             --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_SNOWFLAKE_VERSION=1.8.0 \
+            --build-arg DBT_SNOWFLAKE_VERSION=${{ env.DBT_SNOWFLAKE_VERSION }} \
             -t dbt-runtime-snowflake:ci .
 
-      - name: Smoke test core
+      - name: Smoke test core (dbt --version)
         run: docker run --rm dbt-runtime-core:ci --version
 
       - name: Smoke test snowflake adapter import
