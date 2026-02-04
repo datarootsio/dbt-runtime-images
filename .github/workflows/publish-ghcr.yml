@@ -9,8 +9,6 @@ permissions:
   packages: write
 
 env:
-  DBT_CORE_VERSION: "1.8.0"
-  DBT_SNOWFLAKE_VERSION: "1.8.0"
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
@@ -21,6 +19,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Load versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -E '^[A-Z0-9_]+=.*$' config/versions.env >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -77,7 +81,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}
 
-      # ---------- SMOKE TESTS (against published immutable tags) ----------
+      # ---------- SMOKE TESTS (published images) ----------
       - name: Smoke test core
         run: |
           docker run --rm \
