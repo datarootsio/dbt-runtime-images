@@ -25,7 +25,7 @@ This project follows a **dbt-core–centric versioning model**:
 
 ---
 
-## [1.8.0] - 2026-02-04
+## [1.8.2] - 2026-02-04
 
 ### Added
 - Initial standardized dbt runtime images
