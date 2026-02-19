@@ -80,7 +80,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}
 
-      # ---------- SNOWFLAKE ----------
+      # ---------- ADAPTERS ----------
       - name: Build & push snowflake
         uses: docker/build-push-action@v6
         with:
@@ -100,6 +100,82 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}
 
+      - name: Build & push databricks
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/adapters/databricks/Dockerfile
+          push: true
+          cache-from: type=gha,scope=databricks
+          cache-to: type=gha,mode=max,scope=databricks
+          build-args: |
+            CORE_IMAGE=${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            DBT_DATABRICKS_VERSION=${{ env.DBT_DATABRICKS_VERSION }}
+            VERSION=${{ env.DBT_CORE_VERSION }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            SOURCE=https://github.com/${{ github.repository }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-databricks:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-databricks:${{ env.DBT_CORE_VERSION }}
+
+      - name: Build & push bigquery
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/adapters/bigquery/Dockerfile
+          push: true
+          cache-from: type=gha,scope=bigquery
+          cache-to: type=gha,mode=max,scope=bigquery
+          build-args: |
+            CORE_IMAGE=${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            DBT_BIGQUERY_VERSION=${{ env.DBT_BIGQUERY_VERSION }}
+            VERSION=${{ env.DBT_CORE_VERSION }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            SOURCE=https://github.com/${{ github.repository }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-bigquery:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-bigquery:${{ env.DBT_CORE_VERSION }}
+
+      - name: Build & push postgres
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/adapters/postgres/Dockerfile
+          push: true
+          cache-from: type=gha,scope=postgres
+          cache-to: type=gha,mode=max,scope=postgres
+          build-args: |
+            CORE_IMAGE=${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            DBT_POSTGRES_VERSION=${{ env.DBT_POSTGRES_VERSION }}
+            VERSION=${{ env.DBT_CORE_VERSION }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            SOURCE=https://github.com/${{ github.repository }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-postgres:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-postgres:${{ env.DBT_CORE_VERSION }}
+
+      - name: Build & push fabric
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/adapters/fabric/Dockerfile
+          push: true
+          cache-from: type=gha,scope=fabric
+          cache-to: type=gha,mode=max,scope=fabric
+          build-args: |
+            CORE_IMAGE=${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            DBT_FABRIC_VERSION=${{ env.DBT_FABRIC_VERSION }}
+            VERSION=${{ env.DBT_CORE_VERSION }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            SOURCE=https://github.com/${{ github.repository }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric:${{ env.DBT_CORE_VERSION }}
+
       # ---------- SMOKE TESTS (published immutable tags) ----------
       - name: Smoke test core
         run: |
@@ -112,3 +188,27 @@ jobs:
           docker run --rm --entrypoint bash \
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
             -lc 'python -c "import dbt.adapters.snowflake; print(\"ok\")"'
+
+      - name: Smoke test databricks adapter import
+        run: |
+          docker run --rm --entrypoint bash \
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-databricks:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
+            -lc 'python -c "import dbt.adapters.databricks; print(\"ok\")"'
+
+      - name: Smoke test bigquery adapter import
+        run: |
+          docker run --rm --entrypoint bash \
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-bigquery:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
+            -lc 'python -c "import dbt.adapters.bigquery; print(\"ok\")"'
+
+      - name: Smoke test postgres adapter import
+        run: |
+          docker run --rm --entrypoint bash \
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-postgres:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
+            -lc 'python -c "import dbt.adapters.postgres; print(\"ok\")"'
+
+      - name: Smoke test fabric adapter import
+        run: |
+          docker run --rm --entrypoint bash \
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
+            -lc 'python -c "import dbt.adapters.fabric; print(\"ok\")"'
