@@ -35,6 +35,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -49,6 +52,7 @@ jobs:
           context: .
           file: docker/base/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=base
           cache-to: type=gha,mode=max,scope=base
           build-args: |
@@ -67,6 +71,7 @@ jobs:
           context: .
           file: docker/core/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=core
           cache-to: type=gha,mode=max,scope=core
           build-args: |
@@ -80,13 +85,14 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_CORE_VERSION }}
 
-      # ---------- ADAPTERS ----------
+      # ---------- SNOWFLAKE ----------
       - name: Build & push snowflake
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/adapters/snowflake/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=snowflake
           cache-to: type=gha,mode=max,scope=snowflake
           build-args: |
@@ -100,12 +106,14 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-snowflake:${{ env.DBT_CORE_VERSION }}
 
+      # ---------- DATABRICKS ----------
       - name: Build & push databricks
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/adapters/databricks/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=databricks
           cache-to: type=gha,mode=max,scope=databricks
           build-args: |
@@ -119,12 +127,14 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-databricks:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-databricks:${{ env.DBT_CORE_VERSION }}
 
+      # ---------- BIGQUERY ----------
       - name: Build & push bigquery
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/adapters/bigquery/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=bigquery
           cache-to: type=gha,mode=max,scope=bigquery
           build-args: |
@@ -138,12 +148,14 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-bigquery:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-bigquery:${{ env.DBT_CORE_VERSION }}
 
+      # ---------- POSTGRES ----------
       - name: Build & push postgres
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/adapters/postgres/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=postgres
           cache-to: type=gha,mode=max,scope=postgres
           build-args: |
@@ -157,12 +169,14 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-postgres:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-postgres:${{ env.DBT_CORE_VERSION }}
 
+      # ---------- FABRIC ----------
       - name: Build & push fabric
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/adapters/fabric/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha,scope=fabric
           cache-to: type=gha,mode=max,scope=fabric
           build-args: |

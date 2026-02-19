@@ -34,6 +34,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       # ---------- BASE ----------
       - name: Build base
         run: |
@@ -60,7 +63,7 @@ jobs:
             -t dbt-runtime-core:ci \
             .
 
-      # ---------- ADAPTERS ----------
+      # ---------- SNOWFLAKE ----------
       - name: Build snowflake
         run: |
           docker build \
@@ -74,6 +77,7 @@ jobs:
             -t dbt-runtime-snowflake:ci \
             .
 
+      # ---------- DATABRICKS ----------
       - name: Build databricks
         run: |
           docker build \
@@ -87,6 +91,7 @@ jobs:
             -t dbt-runtime-databricks:ci \
             .
 
+      # ---------- BIGQUERY ----------
       - name: Build bigquery
         run: |
           docker build \
@@ -100,6 +105,7 @@ jobs:
             -t dbt-runtime-bigquery:ci \
             .
 
+      # ---------- POSTGRES ----------
       - name: Build postgres
         run: |
           docker build \
@@ -113,6 +119,7 @@ jobs:
             -t dbt-runtime-postgres:ci \
             .
 
+      # ---------- FABRIC ----------
       - name: Build fabric
         run: |
           docker build \
