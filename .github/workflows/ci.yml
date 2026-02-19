@@ -60,7 +60,7 @@ jobs:
             -t dbt-runtime-core:ci \
             .
 
-      # ---------- SNOWFLAKE ----------
+      # ---------- ADAPTERS ----------
       - name: Build snowflake
         run: |
           docker build \
@@ -74,6 +74,58 @@ jobs:
             -t dbt-runtime-snowflake:ci \
             .
 
+      - name: Build databricks
+        run: |
+          docker build \
+            -f docker/adapters/databricks/Dockerfile \
+            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
+            --build-arg DBT_DATABRICKS_VERSION=${{ env.DBT_DATABRICKS_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
+            -t dbt-runtime-databricks:ci \
+            .
+
+      - name: Build bigquery
+        run: |
+          docker build \
+            -f docker/adapters/bigquery/Dockerfile \
+            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
+            --build-arg DBT_BIGQUERY_VERSION=${{ env.DBT_BIGQUERY_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
+            -t dbt-runtime-bigquery:ci \
+            .
+
+      - name: Build postgres
+        run: |
+          docker build \
+            -f docker/adapters/postgres/Dockerfile \
+            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
+            --build-arg DBT_POSTGRES_VERSION=${{ env.DBT_POSTGRES_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
+            -t dbt-runtime-postgres:ci \
+            .
+
+      - name: Build fabric
+        run: |
+          docker build \
+            -f docker/adapters/fabric/Dockerfile \
+            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
+            --build-arg DBT_FABRIC_VERSION=${{ env.DBT_FABRIC_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
+            -t dbt-runtime-fabric:ci \
+            .
+
       # ---------- SMOKE TESTS ----------
       - name: Smoke test core (dbt --version)
         run: |
@@ -83,3 +135,23 @@ jobs:
         run: |
           docker run --rm --entrypoint bash dbt-runtime-snowflake:ci -lc \
             'python -c "import dbt.adapters.snowflake; print(\"ok\")"'
+
+      - name: Smoke test databricks adapter import
+        run: |
+          docker run --rm --entrypoint bash dbt-runtime-databricks:ci -lc \
+            'python -c "import dbt.adapters.databricks; print(\"ok\")"'
+
+      - name: Smoke test bigquery adapter import
+        run: |
+          docker run --rm --entrypoint bash dbt-runtime-bigquery:ci -lc \
+            'python -c "import dbt.adapters.bigquery; print(\"ok\")"'
+
+      - name: Smoke test postgres adapter import
+        run: |
+          docker run --rm --entrypoint bash dbt-runtime-postgres:ci -lc \
+            'python -c "import dbt.adapters.postgres; print(\"ok\")"'
+
+      - name: Smoke test fabric adapter import
+        run: |
+          docker run --rm --entrypoint bash dbt-runtime-fabric:ci -lc \
+            'python -c "import dbt.adapters.fabric; print(\"ok\")"'
