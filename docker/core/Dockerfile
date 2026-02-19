@@ -17,7 +17,7 @@ ARG DBT_CORE_VERSION=1.8.0
 RUN pip install --no-cache-dir "dbt-core==${DBT_CORE_VERSION}"
 
 COPY --chown=dbtuser:dbtuser scripts/ /usr/local/bin/
-RUN chmod +x /usr/local/bin/*.sh
+RUN chmod +x /usr/local/bin/*.sh /usr/local/bin/render_profiles/*.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["--version"]
