@@ -133,6 +133,20 @@ jobs:
             -t dbt-runtime-fabric:ci \
             .
 
+      # ---------- FABRIC-SAMDEBRUYNE ----------
+      - name: Build fabric-samdebruyn
+        run: |
+          docker build \
+            -f docker/adapters/fabric-samdebruyn/Dockerfile \
+            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
+            --build-arg DBT_FABRIC_SAMDEBRUYN_VERSION=${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }} \
+            --build-arg VERSION=${{ env.VERSION }} \
+            --build-arg VCS_REF=${{ env.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
+            --build-arg SOURCE=${{ env.SOURCE }} \
+            -t dbt-runtime-fabric-samdebruyn:ci \
+            .
+
       # ---------- SMOKE TESTS ----------
       - name: Smoke test core (dbt --version)
         run: |
@@ -162,3 +176,8 @@ jobs:
         run: |
           docker run --rm --entrypoint bash dbt-runtime-fabric:ci -lc \
             'python -c "import dbt.adapters.fabric; print(\"ok\")"'
+
+      - name: Smoke test fabric-samdebruyn adapter import
+        run: |
+          docker run --rm --entrypoint bash dbt-runtime-fabric-samdebruyn:ci -lc \
+            'python -c "import dbt.adapters.fabric_samdebruyn; print(\"ok\")"'

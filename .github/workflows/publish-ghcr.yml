@@ -190,6 +190,27 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric:${{ env.DBT_CORE_VERSION }}-${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric:${{ env.DBT_CORE_VERSION }}
 
+      # ---------- FABRIC-SAMDEBRUYN ----------
+      - name: Build & push fabric-samdebruyn
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/adapters/fabric-samdebruyn/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=fabric
+          cache-to: type=gha,mode=max,scope=fabric
+          build-args: |
+            CORE_IMAGE=${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-core:${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }}-${{ github.sha }}
+            DBT_FABRIC_VERSION=${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }}
+            VERSION=${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            SOURCE=https://github.com/${{ github.repository }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric-samdebruyn:${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }}-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric-samdebruyn:${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }}
+
       # ---------- SMOKE TESTS (published immutable tags) ----------
       - name: Smoke test core
         run: |
@@ -226,3 +247,9 @@ jobs:
           docker run --rm --entrypoint bash \
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric:${{ env.DBT_CORE_VERSION }}-${{ github.sha }} \
             -lc 'python -c "import dbt.adapters.fabric; print(\"ok\")"'
+
+      - name: Smoke test fabric-samdebruyn adapter import
+        run: |
+          docker run --rm --entrypoint bash \
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dbt-runtime-fabric-samdebruyn:${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }}-${{ github.sha }} \
+            -lc 'python -c "import dbt.adapters.fabric_samdebruyn; print(\"ok\")"'
