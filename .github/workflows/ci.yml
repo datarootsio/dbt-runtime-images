@@ -3,7 +3,7 @@ name: ci-build-test
 on:
   pull_request:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -11,6 +11,53 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: snowflake
+            dockerfile: docker/adapters/snowflake/Dockerfile
+            image: dbt-runtime-snowflake:ci
+            version_arg: DBT_SNOWFLAKE_VERSION
+            version_env: DBT_SNOWFLAKE_VERSION
+            import_module: dbt.adapters.snowflake
+
+          - name: databricks
+            dockerfile: docker/adapters/databricks/Dockerfile
+            image: dbt-runtime-databricks:ci
+            version_arg: DBT_DATABRICKS_VERSION
+            version_env: DBT_DATABRICKS_VERSION
+            import_module: dbt.adapters.databricks
+
+          - name: bigquery
+            dockerfile: docker/adapters/bigquery/Dockerfile
+            image: dbt-runtime-bigquery:ci
+            version_arg: DBT_BIGQUERY_VERSION
+            version_env: DBT_BIGQUERY_VERSION
+            import_module: dbt.adapters.bigquery
+
+          - name: postgres
+            dockerfile: docker/adapters/postgres/Dockerfile
+            image: dbt-runtime-postgres:ci
+            version_arg: DBT_POSTGRES_VERSION
+            version_env: DBT_POSTGRES_VERSION
+            import_module: dbt.adapters.postgres
+
+          - name: fabric
+            dockerfile: docker/adapters/fabric/Dockerfile
+            image: dbt-runtime-fabric:ci
+            version_arg: DBT_FABRIC_VERSION
+            version_env: DBT_FABRIC_VERSION
+            import_module: dbt.adapters.fabric
+
+          - name: fabric-samdebruyn
+            dockerfile: docker/adapters/fabric-samdebruyn/Dockerfile
+            image: dbt-runtime-fabric-samdebruyn:ci
+            version_arg: DBT_FABRIC_SAMDEBRUYN_VERSION
+            version_env: DBT_FABRIC_SAMDEBRUYN_VERSION
+            import_module: dbt.adapters.fabric
+            pip_package: dbt-fabric-samdebruyn
 
     steps:
       - name: Checkout
@@ -37,7 +84,6 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # ---------- BASE ----------
       - name: Build base
         run: |
           docker build \
@@ -49,7 +95,6 @@ jobs:
             -t dbt-runtime-base:ci \
             .
 
-      # ---------- CORE ----------
       - name: Build core
         run: |
           docker build \
@@ -63,121 +108,38 @@ jobs:
             -t dbt-runtime-core:ci \
             .
 
-      # ---------- SNOWFLAKE ----------
-      - name: Build snowflake
+      - name: Build ${{ matrix.name }}
+        shell: bash
         run: |
+          set -euo pipefail
+          VERSION_VALUE="${!{{ matrix.version_env }}}"
           docker build \
-            -f docker/adapters/snowflake/Dockerfile \
+            -f "${{ matrix.dockerfile }}" \
             --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_SNOWFLAKE_VERSION=${{ env.DBT_SNOWFLAKE_VERSION }} \
+            --build-arg "${{ matrix.version_arg }}=${VERSION_VALUE}" \
             --build-arg VERSION=${{ env.VERSION }} \
             --build-arg VCS_REF=${{ env.VCS_REF }} \
             --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
             --build-arg SOURCE=${{ env.SOURCE }} \
-            -t dbt-runtime-snowflake:ci \
+            -t "${{ matrix.image }}" \
             .
 
-      # ---------- DATABRICKS ----------
-      - name: Build databricks
-        run: |
-          docker build \
-            -f docker/adapters/databricks/Dockerfile \
-            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_DATABRICKS_VERSION=${{ env.DBT_DATABRICKS_VERSION }} \
-            --build-arg VERSION=${{ env.VERSION }} \
-            --build-arg VCS_REF=${{ env.VCS_REF }} \
-            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
-            --build-arg SOURCE=${{ env.SOURCE }} \
-            -t dbt-runtime-databricks:ci \
-            .
-
-      # ---------- BIGQUERY ----------
-      - name: Build bigquery
-        run: |
-          docker build \
-            -f docker/adapters/bigquery/Dockerfile \
-            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_BIGQUERY_VERSION=${{ env.DBT_BIGQUERY_VERSION }} \
-            --build-arg VERSION=${{ env.VERSION }} \
-            --build-arg VCS_REF=${{ env.VCS_REF }} \
-            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
-            --build-arg SOURCE=${{ env.SOURCE }} \
-            -t dbt-runtime-bigquery:ci \
-            .
-
-      # ---------- POSTGRES ----------
-      - name: Build postgres
-        run: |
-          docker build \
-            -f docker/adapters/postgres/Dockerfile \
-            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_POSTGRES_VERSION=${{ env.DBT_POSTGRES_VERSION }} \
-            --build-arg VERSION=${{ env.VERSION }} \
-            --build-arg VCS_REF=${{ env.VCS_REF }} \
-            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
-            --build-arg SOURCE=${{ env.SOURCE }} \
-            -t dbt-runtime-postgres:ci \
-            .
-
-      # ---------- FABRIC ----------
-      - name: Build fabric
-        run: |
-          docker build \
-            -f docker/adapters/fabric/Dockerfile \
-            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_FABRIC_VERSION=${{ env.DBT_FABRIC_VERSION }} \
-            --build-arg VERSION=${{ env.VERSION }} \
-            --build-arg VCS_REF=${{ env.VCS_REF }} \
-            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
-            --build-arg SOURCE=${{ env.SOURCE }} \
-            -t dbt-runtime-fabric:ci \
-            .
-
-      # ---------- FABRIC-SAMDEBRUYNE ----------
-      - name: Build fabric-samdebruyn
-        run: |
-          docker build \
-            -f docker/adapters/fabric-samdebruyn/Dockerfile \
-            --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg DBT_FABRIC_SAMDEBRUYN_VERSION=${{ env.DBT_FABRIC_SAMDEBRUYN_VERSION }} \
-            --build-arg VERSION=${{ env.VERSION }} \
-            --build-arg VCS_REF=${{ env.VCS_REF }} \
-            --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
-            --build-arg SOURCE=${{ env.SOURCE }} \
-            -t dbt-runtime-fabric-samdebruyn:ci \
-            .
-
-      # ---------- SMOKE TESTS ----------
       - name: Smoke test core (dbt --version)
+        if: matrix.name == 'snowflake'
         run: |
           docker run --rm dbt-runtime-core:ci --version
 
-      - name: Smoke test snowflake adapter import
+      - name: Smoke test optional package install
+        if: matrix.pip_package != ''
         run: |
-          docker run --rm --entrypoint bash dbt-runtime-snowflake:ci -lc \
-            'python -c "import dbt.adapters.snowflake; print(\"ok\")"'
+          docker run --rm --entrypoint bash "${{ matrix.image }}" -lc \
+            'python -m pip show "${{ matrix.pip_package }}"'
 
-      - name: Smoke test databricks adapter import
+      - name: Smoke test adapter import
         run: |
-          docker run --rm --entrypoint bash dbt-runtime-databricks:ci -lc \
-            'python -c "import dbt.adapters.databricks; print(\"ok\")"'
+          docker run --rm --entrypoint bash "${{ matrix.image }}" -lc \
+            'python -c "import ${{ matrix.import_module }}; print(\"ok\")"'
 
-      - name: Smoke test bigquery adapter import
+      - name: Smoke test dbt version
         run: |
-          docker run --rm --entrypoint bash dbt-runtime-bigquery:ci -lc \
-            'python -c "import dbt.adapters.bigquery; print(\"ok\")"'
-
-      - name: Smoke test postgres adapter import
-        run: |
-          docker run --rm --entrypoint bash dbt-runtime-postgres:ci -lc \
-            'python -c "import dbt.adapters.postgres; print(\"ok\")"'
-
-      - name: Smoke test fabric adapter import
-        run: |
-          docker run --rm --entrypoint bash dbt-runtime-fabric:ci -lc \
-            'python -c "import dbt.adapters.fabric; print(\"ok\")"'
-
-      - name: Smoke test fabric-samdebruyn adapter import
-        run: |
-          docker run --rm --entrypoint bash dbt-runtime-fabric-samdebruyn:ci -lc \
-            'python -c "import dbt.adapters.fabric_samdebruyn; print(\"ok\")"'
+          docker run --rm "${{ matrix.image }}" --version
