@@ -110,13 +110,14 @@ jobs:
 
       - name: Build ${{ matrix.name }}
         shell: bash
+        env:
+          ADAPTER_VERSION: ${{ env[matrix.version_env] }}
         run: |
           set -euo pipefail
-          VERSION_VALUE="${!{{ matrix.version_env }}}"
           docker build \
             -f "${{ matrix.dockerfile }}" \
             --build-arg CORE_IMAGE=dbt-runtime-core:ci \
-            --build-arg "${{ matrix.version_arg }}=${VERSION_VALUE}" \
+            --build-arg "${{ matrix.version_arg }}=${ADAPTER_VERSION}" \
             --build-arg VERSION=${{ env.VERSION }} \
             --build-arg VCS_REF=${{ env.VCS_REF }} \
             --build-arg BUILD_DATE=${{ env.BUILD_DATE }} \
