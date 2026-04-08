@@ -38,6 +38,7 @@ This project follows a **dbt-core–centric versioning model**:
   - base image (OS + tooling)
   - core image (dbt-core runtime)
   - Snowflake adapter image
+  - fabric-samdebruyn adapter image
 - Non-root execution for all images
 - Runtime profile rendering via environment variables
 - GitHub Actions CI for build and smoke testing
@@ -60,3 +61,4 @@ This project follows a **dbt-core–centric versioning model**:
 - ghcr.io/datarootsio/dbt-runtime-base:1.8.0
 - ghcr.io/datarootsio/dbt-runtime-core:1.8.0
 - ghcr.io/datarootsio/dbt-runtime-snowflake:1.8.0
+- ghcr.io/datarootsio/dbt-runtime-fabric-samdebruyn:1.10.0

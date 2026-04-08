@@ -9,6 +9,7 @@ This matrix defines the supported combinations of dbt-core and adapters publishe
 | 1.8.0    | bigquery | dbt-bigquery | 1.8.0 | Supported | added |
 | 1.8.0    | postgres | dbt-postgres | 1.8.0 | Supported | added |
 | 1.8.0    | fabric | TBD | TBD | Planned | adapter strategy pending |
+| 1.8.0    | fabric-samdebruyn | dbt-fabric-samdebruyn | 1.10.0 | Supported | added |
 
 Notes:
 - We aim to align adapter minor versions with dbt-core minor versions when possible.
